@@ -113,4 +113,104 @@ auto curry(FN fn) {
   return Curry(fn);
 }
 
+// tap: execute a function and return the input
+// For not pure function, it should have a deep copy of the input
+template <typename FN>
+auto tap(FN fn) {
+  return [fn]<typename T>(T&& t) {
+    T t_copy = t;
+    fn(t_copy);
+    return std::forward<T>(t);
+  };
+}
+
+// alt: execute two functions and return the value which is not empty
+template <typename FN1, typename FN2>
+auto alt(FN1 fn1, FN2 fn2) {
+  return [ fn1, fn2 ]<typename... Args>(Args && ... args) {
+    auto result1 = fn1(std::forward<Args>(args)...);
+    auto result2 = fn2(std::forward<Args>(args)...);
+
+    return result1.has_value() ? result1 : result2;
+  };
+}
+
+// tryCatch: execute a function and catch the exception
+template <typename FN, typename ExceptionHandler>
+auto tryCatch(FN fn, ExceptionHandler exceptionHandler) {
+  return [ fn, exceptionHandler ]<typename... Args>(Args && ... args) {
+    try {
+      return fn(std::forward<Args>(args)...);
+    } catch (const std::exception& e) {
+      (void*)e;
+      return exceptionHandler(std::forward<Args>(args)...);
+      // return exceptionHandler(e);
+    }
+  };
+}
+
+// seq: execute a list of functions in sequence
+// TODO: it can be parallel to improve the performance
+template <typename... FNs>
+auto seq(FNs... fns) {
+  return [fns...]<typename... Args>(Args && ... args) {
+    (fns(std::forward<Args>(args)), ...);
+  };
+}
+
+// converge: apply the every value to the forker functions and gather the output
+// to the joiner function
+// TODO: it can be parallel to improve the performance
+template <typename JoinFN, typename... ForkFNs>
+auto converge(JoinFN joiner, ForkFNs... forkers) {
+  return [joiner, forkers...]<typename Arg>(Arg&& arg) {
+    return joiner(forkers(std::forward<Arg>(arg))...);
+  };
+}
+
+// map: apply the function to every element of the input
+// ! Expecially for the vector.
+template <typename FN>
+auto map(FN fn) {
+  return [fn]<typename T>(std::vector<T> input) {
+    std::vector<T> output;
+    for (auto& elem : input) {
+      output.push_back(fn(elem));
+    }
+    return output;
+  };
+}
+
+// useWith: scatter the input to the functions and gather the output
+template <typename JoinFN, typename... TransformerFNs>
+auto useWith(JoinFN joiner, TransformerFNs... transformers) {
+  return [ joiner, transformers... ]<typename... Args>(Args && ... args) {
+    return joiner(transformers(std::forward<Args>(args))...);
+  };
+}
+
+// reduce: the init value is the first argument, the second argument is the
+// input of the function
+// ! Expecially for the vector.
+template <typename FN, typename T>
+auto reduce(FN reducer, T init) {
+  return [reducer, init](std::vector<T> input) {
+    auto result = init;
+    for (auto& elem : input) {
+      result = reducer(result, elem);
+    }
+    return result;
+  };
+}
+
+// compose: put the input to the last function and put the output to the last
+// second function, until the first function
+// ! All functions should only have one argument except the last one
+template <typename... FNs>
+auto compose(FNs... fns) {
+  return [fns...]<typename... Args>(Args && ... args) {
+    return (..., (fns(std::forward<Args>(args)...)));
+  };
+}
+
 #endif

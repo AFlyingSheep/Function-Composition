@@ -17,6 +17,15 @@ Implement the function composition by C++ 20.
 - partial: left partial application
 - rightPartial: right partial application
 - curry: curried the function
+- tap: execute a function and return the input
+- alt: execute two functions and return the value which is not empty
+- tryCatch: execute a function and catch the exception
+- seq: execute a list of functions in sequence
+- converge: apply the every value to the forker functions and gather the output to the joiner function
+- map: apply the function to every element of the input
+- useWith: scatter the input to the functions and gather the output
+- reduce: the init value is the first argument, the second argument is the input of the function
+- compose: put the input to the last function and put the output to the last second function, until the first function
 
 # Reference
 
