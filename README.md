@@ -16,6 +16,7 @@ Implement the function composition by C++ 20.
 - reverse: reverse the order of the arguments of a function
 - partial: left partial application
 - rightPartial: right partial application
+- curry: curried the function
 
 # Reference
 
